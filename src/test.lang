@@ -1,0 +1,64 @@
+﻿function foo() {let a = 1 + 3;}
+
+function map(items, func) {
+    result = array();
+    for (let i = 0; i < len(items); ++i)
+       {
+       print(i);
+       push(result, func(items[i]))
+       };
+    return result;
+}
+
+function Nodes[
+    <table>
+        <thead>
+            <tr>
+                <td>Nazwa</td>
+                <td>Inne dane</td>
+                <td>Dzieci</td>
+            </tr>
+        </thead>
+
+        {{ nodes }}
+    </table>
+](nodes) {
+    return {
+        nodes: map(nodes, Node)
+    } ;
+}
+
+function Node[
+    <tr>
+        <td> {{ name }} </td>
+        <td> {{ additionalData }} </td>
+        {{ children }}
+    </tr>
+](node) {
+    let children = Empty();
+    if (len(node.children) > 0) {
+        children = map(node.children, Node)
+    } ;
+    return {
+        name: node.name,
+        additionalData: node.additinalData,
+        children: children
+    }  ;
+}
+function Main[
+    <html>
+        <head>
+        </head>
+
+        <body>
+                         {{ nodes }}
+                </body>
+
+    </html>
+](root) {
+    return {
+        nodes: Nodes(root.nodes)
+    };
+  }
+
+

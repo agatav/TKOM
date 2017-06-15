@@ -1,0 +1,125 @@
+%{
+#include "${CMAKE_CURRENT_SOURCE_DIR}/lexeme.hpp"
+#include "${CMAKE_CURRENT_SOURCE_DIR}/lexer.hpp"
+#include "${CMAKE_CURRENT_SOURCE_DIR}/../util/output-stream.hpp"
+
+using namespace lang::lexer;
+
+#define YY_INPUT(buf, result, max_size) { result = Lexer::getInput(buf, max_size); }
+
+%}
+
+NEW_LINE                    \n
+WHITESPACE                  [ \t]+
+
+DIGIT                       [0-9]
+NON_ZERO_DIGIT              [1-9]
+LETTER                      [a-zA-Z]
+
+SYM_OPEN_PARENTHESIS        "("
+SYM_CLOSE_PARENTHESIS       ")"
+SYM_OPEN_BRACE              "{"
+SYM_CLOSE_BRACE             "}"
+SYM_DOUBLE_OPEN_BRACE       "{{"
+SYM_DOUBLE_CLOSE_BRACE      "}}"
+SYM_OPEN_BRACKET            "["
+SYM_CLOSE_BRACKET           "]"
+SYM_OPEN_ANGLE              "<"
+SYM_END_ANGLE               "</"
+SYM_CLOSE_ANGLE             ">"
+
+SYM_SEMICOLON               ";"
+SYM_COMMA                   ","
+SYM_APOSTROPHE              "\""
+SYM_COLON                   ":"
+
+OP_ADD                      "+"
+OP_SUBTRACT                 "-"
+OP_MULTIPLY                 "*"
+OP_DIVIDE                   "/"
+OP_EQUAL                    "=="
+OP_NOT_EQUAL                "!="
+OP_LESS_EQ                  "<="
+OP_GREATER_EQ               ">="
+OP_AND                      "&&"
+OP_OR                       "\|\|"
+OP_ASSIGN                   "="
+OP_NOT                      "!"
+
+KEYWORD_FUNCTION            "function"
+KEYWORD_IF                  "if"
+KEYWORD_ELSE                "else"
+KEYWORD_FOR                 "for"
+KEYWORD_LET                 "let"
+KEYWORD_RETURN              "return"
+KEYWORD_TRUE                "true"
+KEYWORD_FALSE               "false"
+
+IDENTIFIER                  {LETTER}({DIGIT}|{LETTER})*
+NUMBER                      {NON_ZERO_DIGIT}{DIGIT}*("."{DIGIT}+)?|("0"("."{DIGIT}+)?)
+
+%%
+
+{NEW_LINE}                  Lexer::incrementLine();
+{WHITESPACE}
+
+{SYM_OPEN_PARENTHESIS}      return static_cast<int>(LexemeType::OPEN_PARENTHESIS);
+{SYM_CLOSE_PARENTHESIS}     return static_cast<int>(LexemeType::CLOSE_PARENTHESIS);
+{SYM_OPEN_BRACE}            return static_cast<int>(LexemeType::OPEN_BRACE);
+{SYM_CLOSE_BRACE}           return static_cast<int>(LexemeType::CLOSE_BRACE);
+{SYM_DOUBLE_OPEN_BRACE}     return static_cast<int>(LexemeType::DOUBLE_OPEN_BRACE);
+{SYM_DOUBLE_CLOSE_BRACE}    return static_cast<int>(LexemeType::DOUBLE_CLOSE_BRACE);
+{SYM_OPEN_BRACKET}          return static_cast<int>(LexemeType::OPEN_BRACKET);
+{SYM_CLOSE_BRACKET}         return static_cast<int>(LexemeType::CLOSE_BRACKET);
+{SYM_OPEN_ANGLE}            return static_cast<int>(LexemeType::OPEN_ANGLE);
+{SYM_END_ANGLE}             return static_cast<int>(LexemeType::END_ANGLE);
+{SYM_CLOSE_ANGLE}           return static_cast<int>(LexemeType::CLOSE_ANGLE);
+
+{SYM_SEMICOLON}             return static_cast<int>(LexemeType::SEMICOLON);
+{SYM_COMMA}                 return static_cast<int>(LexemeType::COMMA);
+{SYM_APOSTROPHE}            return static_cast<int>(LexemeType::APOSTROPHE);
+{SYM_COLON}                 return static_cast<int>(LexemeType::COLON);
+
+{OP_ADD}                    return static_cast<int>(LexemeType::ADD);
+{OP_SUBTRACT}               return static_cast<int>(LexemeType::SUBTRACT);
+{OP_MULTIPLY}               return static_cast<int>(LexemeType::MULTIPLY);
+{OP_DIVIDE}                 return static_cast<int>(LexemeType::DIVIDE);
+{OP_EQUAL}                  return static_cast<int>(LexemeType::EQUAL);
+{OP_NOT_EQUAL}              return static_cast<int>(LexemeType::NOT_EQUAL);
+{OP_LESS_EQ}                return static_cast<int>(LexemeType::LESS_EQ);
+{OP_GREATER_EQ}             return static_cast<int>(LexemeType::GREATER_EQ);
+{OP_AND}                    return static_cast<int>(LexemeType::AND);
+{OP_OR}                     return static_cast<int>(LexemeType::OR);
+{OP_ASSIGN}                 return static_cast<int>(LexemeType::ASSIGN);
+{OP_NOT}                    return static_cast<int>(LexemeType::NOT);
+
+{KEYWORD_FUNCTION}          return static_cast<int>(LexemeType::FUNCTION);
+{KEYWORD_IF}                return static_cast<int>(LexemeType::IF);
+{KEYWORD_ELSE}              return static_cast<int>(LexemeType::ELSE);
+{KEYWORD_FOR}               return static_cast<int>(LexemeType::FOR);
+{KEYWORD_LET}               return static_cast<int>(LexemeType::LET);
+{KEYWORD_RETURN}            return static_cast<int>(LexemeType::RETURN);
+{KEYWORD_TRUE}              return static_cast<int>(LexemeType::TRUE);
+{KEYWORD_FALSE}             return static_cast<int>(LexemeType::FALSE);
+
+{IDENTIFIER}                return static_cast<int>(LexemeType::IDENTIFIER);
+\"(\\.|[^\\"])*\"           return static_cast<int>(LexemeType::STRING);
+{NUMBER}                    return static_cast<int>(LexemeType::NUMBER);
+
+%%
+
+int yywrap(){ return 1; }
+
+namespace lang {
+    namespace lexer {
+        bool Lexer::take(Lexeme &out) {
+            int atom = yylex();
+            if (atom <= 0)
+                return false;
+            out.type = static_cast<LexemeType>(atom);
+            out.text = yytext;
+            out.line = currentLine;
+            return true;
+        }
+    }
+}
